@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+tensorflow
+pillow
+numpy
+python-multipart
+groq
+langgraph
+python-dotenv
