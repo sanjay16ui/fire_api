@@ -111,10 +111,6 @@ graph.add_edge("act", END)
 agent = graph.compile()
 
 # ---- API ENDPOINT ----
-@app_fastapi.get("/")
-def home():
-    return {"message": "Fire Detection Agent API is running"}
-
 @app_fastapi.post("/predict")
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
@@ -122,6 +118,17 @@ async def predict(file: UploadFile = File(...)):
     img_array = np.expand_dims(np.array(img), axis=0)
 
     result = agent.invoke({"image_array": img_array})
+
+    # Reject low-confidence / likely out-of-scope images
+    if result['confidence'] < 0.55:
+        return {
+            "prediction": "unrecognized",
+            "confidence": result['confidence'],
+            "decision": "Image does not clearly match fire, smoke, or safe-area categories.",
+            "alert_level": "unknown",
+            "reasoning": "The model's confidence was too low to make a reliable decision. This image may be outside the system's trained scope (e.g. not an aerial/ground fire-monitoring photo).",
+            "ledger_hash": None
+        }
 
     return {
         "prediction": result['prediction'],
